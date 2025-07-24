@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>NeuroFocus 25｜靜音完美鼓勵版</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: #ffffff;
+      text-align: center;
+    }
+
+    h1 {
+      margin-top: 30px;
+      font-size: 2.5em;
+      background: linear-gradient(90deg, #00fff0, #00c3ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    #instructions {
+      max-width: 640px;
+      margin: 20px auto;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      border-radius: 12px;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    #game {
+      width: 500px;
+      margin: 30px auto;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+    }
+
+    .number {
+      background: #1f2937;
+      border: 1px solid #00c3ff;
+      color: #00e5ff;
+      font-size: 22px;
+      padding: 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .number:hover {
+      background: #00c3ff;
+      color: #0d1117;
+      transform: scale(1.05);
+    }
+
+    .correct {
+      background-color: #22c55e !important;
+      color: #000000 !important;
+    }
+
+    .wrong {
+      background-color: #ef4444 !important;
+      color: #ffffff !important;
+    }
+
+    #message, #timer {
+      margin-top: 15px;
+      font-size: 18px;
+    }
+
+    #startBtn {
+      margin-top: 20px;
+      padding: 12px 28px;
+      font-size: 18px;
+      background: linear-gradient(90deg, #00e5ff, #00c3ff);
+      color: #0f172a;
+      font-weight: bold;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    #startBtn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 10px #00c3ff;
+    }
+
+    #modeSelect {
+      margin-top: 10px;
+      padding: 8px 16px;
+      font-size: 16px;
+      border-radius: 8px;
+      background-color: #1e293b;
+      color: #00e5ff;
+      border: 1px solid #00c3ff;
+    }
+
+    @media (max-width: 600px) {
+      #game {
+        width: 90%;
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+
+<h1>NeuroFocus 25</h1>
+
+<div id="instructions">
+  🎯 <strong>遊戲說明：</strong><br>
+  在指定秒數內（可選模式）依序點擊數字 1 到 25。<br>
+  每錯一次 <strong>扣 4 分</strong>，錯誤數字 <strong>變紅 2 秒</strong>。<br>
+  得到 <strong>100 分</strong> 會有特別鼓勵訊息！
+</div>
+
+<select id="modeSelect">
+  <option value="60">🟢 新手模式（60秒）</option>
+  <option value="40" selected>🟡 挑戰模式（40秒）</option>
+  <option value="30">🔴 專家模式（30秒）</option>
+</select>
+
+<br>
+<button id="startBtn">開始遊戲</button>
+<div id="timer">⏱ 剩餘時間：-- 秒</div>
+<div id="message">請選擇模式並點擊「開始遊戲」</div>
+<div id="game"></div>
+
+<script>
+  const game = document.getElementById("game");
+  const message = document.getElementById("message");
+  const startBtn = document.getElementById("startBtn");
+  const timerDisplay = document.getElementById("timer");
+  const modeSelect = document.getElementById("modeSelect");
+
+  let currentNumber = 1;
+  let timeLeft = 40;
+  let countdown;
+  let gameActive = false;
+  let mistakeCount = 0;
+
+  function shuffleArray(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function startGame() {
+    gameActive = true;
+    currentNumber = 1;
+    timeLeft = parseInt(modeSelect.value);
+    mistakeCount = 0;
+    timerDisplay.textContent = `⏱ 剩餘時間：${timeLeft} 秒`;
+    message.textContent = "請依序點擊數字 1 到 25";
+    game.innerHTML = "";
+    startBtn.disabled = true;
+    modeSelect.disabled = true;
+
+    const numbers = shuffleArray([...Array(25).keys()].map(x => x + 1));
+    numbers.forEach(num => {
+      const div = document.createElement("div");
+      div.className = "number";
+      div.textContent = num;
+      div.addEventListener("click", () => handleClick(num, div));
+      game.appendChild(div);
+    });
+
+    countdown = setInterval(() => {
+      timeLeft--;
+      timerDisplay.textContent = `⏱ 剩餘時間：${timeLeft} 秒`;
+      if (timeLeft <= 0) {
+        endGame(false);
+      }
+    }, 1000);
+  }
+
+  function handleClick(num, element) {
+    if (!gameActive) return;
+    if (num === currentNumber) {
+      element.classList.add("correct");
+      element.style.pointerEvents = "none";
+      if (currentNumber === 25) {
+        endGame(true);
+      }
+      currentNumber++;
+    } else {
+      mistakeCount++;
+      element.classList.add("wrong");
+      message.textContent = `❌ 點錯了！應該是 ${currentNumber}，錯誤次數：${mistakeCount}`;
+      setTimeout(() => {
+        element.classList.remove("wrong");
+      }, 2000);
+    }
+  }
+
+  function endGame(success) {
+    clearInterval(countdown);
+    gameActive = false;
+    const score = Math.max(0, 100 - mistakeCount * 4);
+
+    if (success) {
+      if (score === 100) {
+        message.innerHTML = `💯 <strong>完美表現！你的專注力超強！</strong><br>❌ 錯誤次數：0<br>🏆 分數：<strong>100</strong> 分`;
+      } else {
+        message.innerHTML = `🎉 成功完成！<br>❌ 錯誤次數：${mistakeCount}<br>🏆 分數：<strong>${score}</strong> 分`;
+      }
+    } else {
+      message.innerHTML = `⏰ 時間結束，挑戰失敗<br>❌ 錯誤次數：${mistakeCount}<br>🏆 分數：<strong>${score}</strong> 分`;
+    }
+
+    startBtn.disabled = false;
+    modeSelect.disabled = false;
+    startBtn.textContent = "重新挑戰";
+  }
+
+  startBtn.addEventListener("click", startGame);
+</script>
+
+</body>
+</html>
