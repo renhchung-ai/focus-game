@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>干擾下的專注｜Neon Focus Trainer</title>
+  <style>
+    * { box-sizing: border-box; user-select: none; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', '微軟正黑體', sans-serif;
+      background: linear-gradient(160deg, #0f0f0f, #1c1c1c);
+      color: #00ffe5;
+      text-align: center;
+    }
+    h1 {
+      font-size: 2.2em;
+      margin: 20px 0 5px;
+      text-shadow: 0 0 10px #0ff, 0 0 20px #0ff;
+    }
+    p {
+      font-size: 1.1em;
+      color: #aaa;
+      margin-bottom: 10px;
+    }
+    #difficultySelect {
+      margin-bottom: 15px;
+      font-size: 16px;
+      padding: 8px;
+      border-radius: 6px;
+      border: none;
+      background: #111;
+      color: #00ffe5;
+      box-shadow: 0 0 10px #0ff;
+    }
+    #gameArea {
+      margin: 0 auto;
+      width: 90%;
+      max-width: 800px;
+      height: 450px;
+      background-color: #111;
+      border: 2px solid #0ff;
+      border-radius: 20px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 20px #0ff;
+    }
+    .shape {
+      width: 50px;
+      height: 50px;
+      position: absolute;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+    .square {
+      background-color: #00ff00;
+      box-shadow: 0 0 12px #0f0;
+      border-radius: 8px;
+    }
+    .circle {
+      background-color: #ff4444;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #f00;
+    }
+    .triangle {
+      width: 0;
+      height: 0;
+      border-left: 25px solid transparent;
+      border-right: 25px solid transparent;
+      border-bottom: 50px solid #4488ff;
+      background: none;
+      box-shadow: 0 0 12px #44f;
+    }
+    #scoreboard {
+      font-size: 1.2em;
+      margin: 15px 0;
+      color: #0ff;
+      text-shadow: 0 0 8px #0ff;
+    }
+    #startBtn {
+      padding: 12px 30px;
+      font-size: 18px;
+      background: #111;
+      border: 2px solid #00ffe5;
+      color: #00ffe5;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: 0.3s;
+      text-shadow: 0 0 8px #0ff;
+      box-shadow: 0 0 15px #0ff;
+    }
+    #startBtn:hover {
+      background-color: #00ffe5;
+      color: #111;
+      box-shadow: 0 0 25px #00ffe5;
+    }
+    #overlay {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      backdrop-filter: blur(4px);
+      background: rgba(0, 0, 0, 0.75);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      z-index: 10;
+      color: #fff;
+    }
+    #overlay h2 {
+      color: #00ffe5;
+      text-shadow: 0 0 10px #0ff;
+    }
+    #overlay button {
+      margin-top: 20px;
+      padding: 10px 25px;
+      font-size: 16px;
+      border: none;
+      background-color: #00ffe5;
+      color: #111;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 0 15px #0ff;
+    }
+    #message {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 0, 0, 0.9);
+      padding: 10px 20px;
+      border-radius: 8px;
+      color: #fff;
+      font-weight: bold;
+      display: none;
+      z-index: 20;
+      box-shadow: 0 0 10px #f00;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🎯 干擾下的專注</h1>
+  <p>遊戲時間固定 <strong>25 秒</strong>，請找出 <strong style="color:#00ff00;">🟩 綠色正方形</strong>，達成 100 分！</p>
+
+  <select id="difficultySelect">
+    <option value="easy">簡單</option>
+    <option value="normal">中等</option>
+    <option value="hard">困難</option>
+  </select>
+
+  <div id="scoreboard">分數：0 | 時間：-- 秒</div>
+  <button id="startBtn">🚀 開始挑戰</button>
+  <div id="gameArea">
+    <div id="message">這不是綠色正方形喔！</div>
+  </div>
+
+  <div id="overlay">
+    <h2 id="resultText"></h2>
+    <button onclick="startGame()">重新挑戰</button>
+  </div>
+
+  <script>
+    const gameArea = document.getElementById("gameArea");
+    const scoreBoard = document.getElementById("scoreboard");
+    const startBtn = document.getElementById("startBtn");
+    const overlay = document.getElementById("overlay");
+    const resultText = document.getElementById("resultText");
+    const difficultySelect = document.getElementById("difficultySelect");
+    const message = document.getElementById("message");
+
+    let score = 0;
+    let timeLeft = 25;
+    let interval, spawnInterval;
+    let spawnCount = 1;
+    let spawnRate = 800;
+
+    function getDifficultySettings(level) {
+      if (level === "easy") return { spawnRate: 800, count: 1 };
+      if (level === "normal") return { spawnRate: 600, count: 2 };
+      if (level === "hard") return { spawnRate: 400, count: 3 };
+    }
+
+    function randomPosition() {
+      const x = Math.random() * (gameArea.clientWidth - 60);
+      const y = Math.random() * (gameArea.clientHeight - 60);
+      return { x, y };
+    }
+
+    function randomShape() {
+      const shapes = ["square", "circle", "triangle"];
+      return shapes[Math.floor(Math.random() * shapes.length)];
+    }
+
+    function spawnShapes() {
+      for (let i = 0; i < spawnCount; i++) {
+        const shape = document.createElement("div");
+        const type = randomShape();
+        shape.classList.add("shape", type);
+        if (type === "triangle") {
+          shape.style.width = 0;
+          shape.style.height = 0;
+        }
+        const { x, y } = randomPosition();
+        shape.style.left = `${x}px`;
+        shape.style.top = `${y}px`;
+
+        shape.onclick = () => {
+          if (type === "square") {
+            score += 5;
+          } else {
+            score -= 3;
+            showMessage("這不是綠色正方形喔！");
+          }
+          shape.remove();
+          updateScore();
+        };
+
+        gameArea.appendChild(shape);
+        setTimeout(() => shape.remove(), 1600);
+      }
+    }
+
+    function showMessage(text) {
+      message.textContent = text;
+      message.style.display = "block";
+      setTimeout(() => {
+        message.style.display = "none";
+      }, 2000);
+    }
+
+    function updateScore() {
+      scoreBoard.innerHTML = `分數：${score} | 時間：${timeLeft} 秒`;
+    }
+
+    function startGame() {
+      score = 0;
+      timeLeft = 25;
+      updateScore();
+      startBtn.style.display = "none";
+      overlay.style.display = "none";
+      gameArea.innerHTML = '<div id="message">這不是綠色正方形喔！</div>';
+
+      const level = difficultySelect.value;
+      const settings = getDifficultySettings(level);
+      spawnRate = settings.spawnRate;
+      spawnCount = settings.count;
+
+      spawnInterval = setInterval(spawnShapes, spawnRate);
+      interval = setInterval(() => {
+        timeLeft--;
+        updateScore();
+        if (timeLeft <= 0) {
+          clearInterval(interval);
+          clearInterval(spawnInterval);
+          showResult();
+        }
+      }, 1000);
+    }
+
+    function showResult() {
+      let message = score >= 100
+        ? "🌟 太棒了！你的專注力達到 100 分！"
+        : score >= 60
+        ? "💡 表現不錯，再挑戰一次看看能不能滿分！"
+        : "🔄 專注還可以更進步，再試一次吧！";
+
+      resultText.innerHTML = `你的總分是 <strong style="color:#0f0">${score}</strong> 分<br><br>${message}`;
+      overlay.style.display = "flex";
+      startBtn.style.display = "inline-block";
+    }
+
+    startBtn.onclick = startGame;
+  </script>
+
+</body>
+</html>
