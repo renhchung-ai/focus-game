@@ -83,7 +83,6 @@
     <div class="footer">
       <div class="divider"></div>
       <p>計分邏輯依據 PSQI 標準：七個構面（A–G）各 0–3 分，總分 0–21；常見臨床切點為總分 &gt; 5 代表睡眠品質較差。此頁僅供教學／研究使用，請依個案需求提供後續衛教或治療建議。</p>
-      //<p class="muted">資料上傳：本範本會以 <code>fetch</code> POST JSON 至您設定的 API（例如 Google Apps Script / Supabase / Firebase）。請在下方程式碼的 <code>ENDPOINT_URL</code> 改為您的實際位址。</p>
     </div>
   </div>
 </div>
@@ -196,9 +195,8 @@
       if(conn) conn.textContent = '已送出到 ' + ENDPOINT_URL;
       if(!r.ok) throw new Error('HTTP '+r.status);
       await r.json().catch(()=>({}));
-      if(btn){ btn.textContent = '已送出！'; setTimeout(()=>{ btn.disabled = false; btn.textContent = '立即計分（並送出）'; }, 1200); }
+      if(btn){ btn.textContent = '已送出！'; setTimeout(()=>{ btn.disabled = false; btn.textContent = '立即計分'; }, 1200); }
     }catch(err){
-      // alert('上傳失敗：'+err.message);
       if(btn){ btn.disabled = false; btn.textContent = '立即計分（並送出）'; }
     }
   }
