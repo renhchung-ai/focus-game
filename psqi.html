@@ -198,7 +198,7 @@
       await r.json().catch(()=>({}));
       if(btn){ btn.textContent = '已送出！'; setTimeout(()=>{ btn.disabled = false; btn.textContent = '立即計分（並送出）'; }, 1200); }
     }catch(err){
-      alert('上傳失敗：'+err.message);
+      // alert('上傳失敗：'+err.message);
       if(btn){ btn.disabled = false; btn.textContent = '立即計分（並送出）'; }
     }
   }
