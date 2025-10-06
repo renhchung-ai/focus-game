@@ -71,7 +71,7 @@
       <fieldset class="row"><div><label>9. 白天缺乏精力去做事？</label></div><select name="q9_energy"><option value="0">無</option><option value="1">每週少於1次</option><option value="2">每週1–2次</option><option value="3">每週3次以上</option></select></fieldset>
 
       <div class="actions">
-        <button type="button" id="btnComputeSubmit" onclick="computeAndSubmit()">立即計分（並送出）</button>
+        <button type="button" id="btnComputeSubmit" onclick="computeAndSubmit()">立即計分</button>
         <button type="button" onclick="psqiForm.reset(); resetOutput(); setDefaults();">清除重填</button>
       </div>
     </form>
@@ -186,7 +186,7 @@
     if(!ENDPOINT_URL){
       if(conn) conn.textContent = '未設定 ENDPOINT_URL，僅做本機計分（不送出）。';
       alert('已完成本機計分。若要儲存資料，請在原始碼中設定 ENDPOINT_URL。');
-      if(btn){ btn.disabled = false; btn.textContent = '立即計分（並送出）'; }
+      if(btn){ btn.disabled = false; btn.textContent = '立即計分'; }
       return;
     }
     try{
@@ -197,7 +197,7 @@
       await r.json().catch(()=>({}));
       if(btn){ btn.textContent = '已送出！'; setTimeout(()=>{ btn.disabled = false; btn.textContent = '立即計分'; }, 1200); }
     }catch(err){
-      if(btn){ btn.disabled = false; btn.textContent = '立即計分（並送出）'; }
+      if(btn){ btn.disabled = false; btn.textContent = '立即計分'; }
     }
   }
 </script>
